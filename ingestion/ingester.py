@@ -9,7 +9,7 @@ from langchain_core.documents import Document
 
 load_dotenv()
 
-os.environ['PINECONE_API_KEY'] = 'f4ded361-fee6-4fd9-b4b2-27e192dd4b91'
+os.environ['PINECONE_API_KEY'] = 'xx'
 
 def get_chunked_pdf_documents(path: str) -> list[Document]:
     loader = TextLoader(path)
