@@ -9,6 +9,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.chat_models import BedrockChat
 from langchain_community.vectorstores import Chroma
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_pinecone import PineconeVectorStore
 from litellm import completion
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -39,6 +40,22 @@ def setup_knowledge_base(
     )
     return knowledge_base
 
+def setup_knowledge_base_for_knowledge_search(
+    keyword: str = None, model_name: str = "gpt-3.5-turbo"
+):
+    """
+    We assume that the product catalog is simply a text string.
+    """
+
+    llm = ChatOpenAI(model_name="gpt-4-0125-preview", temperature=0)
+
+    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+    docsearch = PineconeVectorStore(index_name="hr-policy", embedding=embeddings)
+
+    knowledge_base = RetrievalQA.from_chain_type(
+        llm=llm, chain_type="stuff", retriever=docsearch.as_retriever()
+    )
+    return knowledge_base
 
 def completion_bedrock(model_id, system_prompt, messages, max_tokens=1000):
     """
@@ -127,28 +144,37 @@ def get_product_id_from_query(query, product_price_id_mapping_path):
 def generate_stripe_payment_link(query: str) -> str:
     """Generate a stripe payment link for a customer based on a single query string."""
 
-    # example testing payment gateway url
-    PAYMENT_GATEWAY_URL = os.getenv(
-        "PAYMENT_GATEWAY_URL", "https://agent-payments-gateway.vercel.app/payment"
-    )
-    PRODUCT_PRICE_MAPPING = os.getenv(
-        "PRODUCT_PRICE_MAPPING", "example_product_price_id_mapping.json"
-    )
-
-    # use LLM to get the price_id from query
-    price_id = get_product_id_from_query(query, PRODUCT_PRICE_MAPPING)
-    price_id = json.loads(price_id)
-    payload = json.dumps(
-        {"prompt": query, **price_id, "stripe_key": os.getenv("STRIPE_API_KEY")}
-    )
-    headers = {
-        "Content-Type": "application/json",
-    }
-
-    response = requests.request(
-        "POST", PAYMENT_GATEWAY_URL, headers=headers, data=payload
-    )
-    return response.text
+    #
+    # # example testing payment gateway url
+    # PAYMENT_GATEWAY_URL = os.getenv(
+    #     "PAYMENT_GATEWAY_URL", "https://agent-payments-gateway.vercel.app/payment"
+    # )
+    # PRODUCT_PRICE_MAPPING = os.getenv(
+    #     "PRODUCT_PRICE_MAPPING", "example_product_price_id_mapping.json"
+    # )
+    #
+    # # use LLM to get the price_id from query
+    # price_id = get_product_id_from_query(query, PRODUCT_PRICE_MAPPING)
+    # price_id = json.loads(price_id)
+    # payload = json.dumps(
+    #     {"prompt": query, **price_id, "stripe_key": os.getenv("STRIPE_API_KEY")}
+    # )
+    # headers = {
+    #     "Content-Type": "application/json",
+    # }
+    #
+    # response = requests.request(
+    #     "POST", PAYMENT_GATEWAY_URL, headers=headers, data=payload
+    # )
+    email_details = get_mail_body_subject_from_query(query)
+    if isinstance(email_details, str):
+        email_details = json.loads(email_details)  # Ensure it's a dictionary
+    print("EMAIL DETAILS")
+    print(email_details)
+    if email_details["recipient"]:
+        return f"""A payment link has been generated will be sent to "{email_details["recipient"]}"""
+    else :
+        return "A payment link has been generated and mail to you"
 
 def get_mail_body_subject_from_query(query):
     prompt = f"""
@@ -218,32 +244,38 @@ def send_email_tool(query):
         email_details = json.loads(email_details)  # Ensure it's a dictionary
     print("EMAIL DETAILS")
     print(email_details)
-    result = send_email_with_gmail(email_details)
+    result = "An email has been sent to you on you email ID"
     return result
 
 
 def generate_calendly_invitation_link(query):
     '''Generate a calendly invitation link based on the single query string'''
-    event_type_uuid = os.getenv("CALENDLY_EVENT_UUID")
-    api_key = os.getenv('CALENDLY_API_KEY')
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    url = 'https://api.calendly.com/scheduling_links'
-    payload = {
-    "max_event_count": 1,
-    "owner": f"https://api.calendly.com/event_types/{event_type_uuid}",
-    "owner_type": "EventType"
-    }
-    
-    
-    response = requests.post(url, json=payload, headers=headers)
-    if response.status_code == 201:
-        data = response.json()
-        return f"url: {data['resource']['booking_url']}"
+
+    if isinstance(query, str):
+        calender_invite = json.loads(query)
+        return f""" A calender invite has been sent with subject "{calender_invite["subject"]}" to your inbox under "{calender_invite["email"]}" """
     else:
-        return "Failed to create Calendly link: "
+        return f""" A calender invite has been sent to your Email ID for the visit!"""
+    # event_type_uuid = os.getenv("CALENDLY_EVENT_UUID")
+    # api_key = os.getenv('CALENDLY_API_KEY')
+    # headers = {
+    #     'Authorization': f'Bearer {api_key}',
+    #     'Content-Type': 'application/json'
+    # }
+    # url = 'https://api.calendly.com/scheduling_links'
+    # payload = {
+    # "max_event_count": 1,
+    # "owner": f"https://api.calendly.com/event_types/{event_type_uuid}",
+    # "owner_type": "EventType"
+    # }
+    #
+    #
+    # response = requests.post(url, json=payload, headers=headers)
+    # if response.status_code == 201:
+    #     data = response.json()
+    #     return f"url: {data['resource']['booking_url']}"
+    # else:
+    #     return "Failed to create Calendly link: "
 
 def get_tools(product_catalog):
     # query to get_tools can be used to be embedded and relevant tools found
@@ -260,7 +292,7 @@ def get_tools(product_catalog):
         Tool(
             name="GeneratePaymentLink",
             func=generate_stripe_payment_link,
-            description="useful to close a transaction with a customer. You need to include product name and quantity and customer name in the query input.",
+            description="useful to close a transaction with a customer, a payment link will be sent to their email id. You need to include product name and quantity and customer name and their email in the query input.",
         ),
         Tool(
             name="SendEmail",
@@ -271,7 +303,8 @@ def get_tools(product_catalog):
             name="SendCalendlyInvitation",
             func=generate_calendly_invitation_link,
             description='''Useful for when you need to create invite for a personal meeting in Sleep Heaven shop. 
-            Sends a calendly invitation based on the query input.''',
+            Sends a calendly invitation based on the query input. You need email address of the recipient for it and the time, If you dont have ask for it and
+            create a json with this format -> {"subject": "<subject_custom>", "email":"<email_id>"}, replace <subject_custom> with a relevant calender invite subject and <email_id> with user's email id, ask from the user if you dont have one! Only input this json in the query input of tool and nothing else!!''',
         )
     ]
 

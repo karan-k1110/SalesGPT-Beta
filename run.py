@@ -7,7 +7,7 @@ import warnings
 from dotenv import load_dotenv
 from langchain_community.chat_models import ChatLiteLLM
 
-from salesgpt.agents import SalesGPT
+from salesgpt_beta.agents import SalesGPT
 
 load_dotenv()  # loads .env file
 
@@ -19,10 +19,10 @@ logging.getLogger().setLevel(logging.CRITICAL)
 
 # LangSmith settings section, set TRACING_V2 to "true" to enable it
 # or leave it as it is, if you don't need tracing (more info in README)
-os.environ["LANGCHAIN_TRACING_V2"] = "false"
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_SMITH_API_KEY", "")
-os.environ["LANGCHAIN_PROJECT"] = ""  # insert you project name here
+os.environ["LANGCHAIN_PROJECT"] = "sales-gpt-beta"  # insert you project name here
 
 if __name__ == "__main__":
     # Initialize argparse
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         "--max_num_turns",
         type=int,
         help="Maximum number of turns in the sales conversation",
-        default=10,
+        default=25,
     )
 
     # Parse arguments
@@ -82,17 +82,20 @@ if __name__ == "__main__":
             exit(1)
 
         print(f"Agent config {config}")
-        sales_agent = SalesGPT.from_llm(llm, verbose=verbose, **config)
+        sales_agent = SalesGPT.from_llm(llm, verbose=True, **config)
 
     sales_agent.seed_agent()
     print("=" * 10)
     cnt = 0
+
+    sales_agent.determine_conversation_stage()  # optional for demonstration, built into the prompt
+
     while cnt != max_num_turns:
         cnt += 1
         if cnt == max_num_turns:
             print("Maximum number of turns reached - ending the conversation.")
             break
-        sales_agent.step()
+        print(sales_agent.step()["output"])
 
         # end conversation
         if "<END_OF_CALL>" in sales_agent.conversation_history[-1]:

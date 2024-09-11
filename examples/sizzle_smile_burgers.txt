@@ -1,0 +1,41 @@
+Sizzle & Smile Burgers
+
+Product 1: Classic Stack
+Description: The Classic Stack features two juicy beef patties, house special sauce, fresh lettuce, cheddar cheese, zesty pickles, and onions, all nestled between a golden sesame seed bun.
+Price: $3.99
+
+Product 2: Mighty Melt
+Description: The Mighty Melt boasts a quarter-pound beef patty, two slices of rich cheese, crisp onions, tangy pickles, mustard, and ketchup, served on a toasted sesame seed bun.
+Price: $4.29
+
+Product 3: Crispy Clucker
+Description: The Crispy Clucker is a golden-fried chicken sandwich topped with shredded lettuce and creamy mayo, served on a soft, toasted bun.
+Price: $1.29
+
+Product 4: Ocean Delight
+Description: The Ocean Delight features a tender fish filet, topped with tangy tartar sauce and a slice of cheese, all encased in a steamed bun.
+Price: $3.79
+
+Product 5: Tender Bites
+Description: Tender Bites are succulent, bite-sized pieces of chicken, coated in a crunchy breading. Available in portions of 6, 10, 20, and 40 pieces.
+Price: $2.99 (6 pieces), $4.49 (10 pieces), $8.99 (20 pieces), $15.99 (40 pieces)
+
+Product 6: Golden Fries
+Description: Sizzle & Smile's Golden Fries are famous for their crispy exterior and fluffy interior, crafted from premium potatoes.
+Price: $1.39 (Small), $1.79 (Medium), $2.19 (Large)
+
+Product 7: Smiley Meal
+Description: The Smiley Meal includes your choice of a mini-burger, cheeseburger, or 4-piece Tender Bites, paired with kid-sized fries, apple slices, and a drink. Comes with a fun surprise toy.
+Price: $3.49
+
+Product 8: Sunrise Sandwich
+Description: The Sunrise Sandwich is a morning classic with a freshly cracked egg, savory Canadian bacon, and melted cheese, served on a toasted English muffin.
+Price: $2.79
+
+Product 9: Morning Wrap
+Description: The Morning Wrap is a soft flour tortilla filled with fluffy scrambled eggs, seasoned sausage, melted cheese, green chiles, and onions.
+Price: $1.29
+
+Product 10: Whirlwind Delight
+Description: The Whirlwind Delight is a creamy soft-serve ice cream treat, swirled with your choice of crunchy cookie pieces or colorful candy.
+Price: $2.39
